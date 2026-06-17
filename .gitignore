@@ -1,0 +1,7 @@
+*.bin
+*.BIN
+*.log
+*.tlog
+__pycache__/
+*.pyc
+.vscode/
