@@ -1,7 +1,12 @@
+# Logs
 *.bin
 *.BIN
 *.log
 *.tlog
+
+# Python
 __pycache__/
 *.pyc
+
+# VS Code
 .vscode/
