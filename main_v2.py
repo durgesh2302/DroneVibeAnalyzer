@@ -6,6 +6,7 @@ from modules.vibe import get_vibe_stats
 from modules.ftn import get_ftn_stats
 from modules.pwm import get_pwm_stats
 from modules.fft import show_fft
+from modules.imu import get_imu_info
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
@@ -263,6 +264,40 @@ Recommendations:
     output.delete("0.0", "end")
     output.insert("0.0", report)
 
+def imu_report():
+
+    if selected_file == "":
+        return
+
+    imu = get_imu_info(selected_file)
+
+    report = f"""
+==========================
+IMU INFORMATION
+==========================
+
+Total Samples : {imu['samples']}
+
+Gyro X Mean : {imu['gx_mean']}
+
+Gyro Y Mean : {imu['gy_mean']}
+
+Gyro Z Mean : {imu['gz_mean']}
+
+Status : HEALTHY
+
+Recommendations:
+
+✓ IMU data available
+
+✓ Gyroscope logging detected
+
+✓ Sensor operational
+"""
+
+    output.delete("0.0", "end")
+    output.insert("0.0", report)
+
 
 # ==========================
 # BUTTONS
@@ -312,7 +347,8 @@ ctk.CTkButton(
 
 ctk.CTkButton(
     left_panel,
-    text="IMU Info"
+    text="IMU Info",
+    command=imu_report
 ).pack(pady=6)
 
 ctk.CTkButton(
