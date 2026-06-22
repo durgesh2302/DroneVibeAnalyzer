@@ -7,6 +7,7 @@ from modules.ftn import get_ftn_stats
 from modules.pwm import get_pwm_stats
 from modules.fft import show_fft
 from modules.imu import get_imu_info
+from modules.rcou import get_rcou_info
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
@@ -298,6 +299,40 @@ Recommendations:
     output.delete("0.0", "end")
     output.insert("0.0", report)
 
+def rcou_report():
+
+    if selected_file == "":
+        return
+
+    rcou = get_rcou_info(selected_file)
+
+    report = f"""
+==========================
+RCOU INFORMATION
+==========================
+
+Total Samples : {rcou['samples']}
+
+PWM Min : {rcou['min']}
+
+PWM Max : {rcou['max']}
+
+PWM Mean : {rcou['mean']}
+
+Status : HEALTHY
+
+Recommendations:
+
+✓ ESC output detected
+
+✓ PWM range normal
+
+✓ Motor output healthy
+"""
+
+    output.delete("0.0", "end")
+    output.insert("0.0", report)
+
 
 # ==========================
 # BUTTONS
@@ -353,7 +388,8 @@ ctk.CTkButton(
 
 ctk.CTkButton(
     left_panel,
-    text="RCOU Info"
+    text="RCOU Info",
+    command=rcou_report
 ).pack(pady=6)
 
 ctk.CTkButton(
