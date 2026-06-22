@@ -2,12 +2,17 @@ import customtkinter as ctk
 from tkinter import filedialog
 
 from modules.peak import get_peaks
-from modules.vibe import get_vibe_stats
+from modules.vibe import get_vibe_stats, show_vibe_graph
 from modules.ftn import get_ftn_stats
 from modules.pwm import get_pwm_stats
 from modules.fft import show_fft
 from modules.imu import get_imu_info
-from modules.rcou import get_rcou_info
+from modules.rcou import (
+    get_rcou_info,
+    show_rcou_graph,
+    show_motor_stats_graph
+)
+
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
@@ -119,21 +124,102 @@ def vibe_report():
     vibe = get_vibe_stats(selected_file)
 
     report = f"""
+
 ==========================
-VIBE ANALYSIS
+VIBRATION ANALYSIS
 ==========================
 
-Mean X : {vibe['mean_x']}
+VIBE X Mean : {vibe['mean_x']} m/s²
 
-Mean Y : {vibe['mean_y']}
+VIBE Y Mean : {vibe['mean_y']} m/s²
 
-Mean Z : {vibe['mean_z']}
+VIBE Z Mean : {vibe['mean_z']} m/s²
 
-Max Z : {vibe['max_z']}
+VIBE X Max : {vibe['max_x']} m/s²
+
+VIBE Y Max : {vibe['max_y']} m/s²
+
+VIBE Z Max : {vibe['max_z']} m/s²
 """
 
-    output.delete("0.0","end")
+    if vibe["score"] >= 90:
+
+        report += f"""
+
+==========================
+HEALTH ASSESSMENT
+==========================
+
+Vibration Score : {vibe['score']} / 100
+
+Status : LOW VIBRATION
+
+Recommendations:
+
+- IMU isolation healthy
+
+- Frame resonance not detected
+
+- Propeller balance acceptable
+
+- Flight controller vibration within limits
+"""
+
+    elif vibe["score"] >= 75:
+
+        report += f"""
+
+==========================
+HEALTH ASSESSMENT
+==========================
+
+Vibration Score : {vibe['score']} / 100
+
+Status : MODERATE VIBRATION
+
+Recommendations:
+
+- Check propeller balance
+
+- Review motor output graph
+
+- Inspect frame mounting
+
+- Verify notch filtering
+"""
+
+    else:
+
+        report += f"""
+
+==========================
+HEALTH ASSESSMENT
+==========================
+
+Vibration Score : {vibe['score']} / 100
+
+Status : HIGH VIBRATION
+
+Recommendations:
+
+- Check propeller damage
+
+- Inspect motor bearings
+
+- Check frame resonance
+
+- Review FFT peaks and notch tracking
+"""
+
+    output.delete("0.0", "end")
     output.insert("0.0", report)
+
+def vibe_graph():
+
+    if selected_file == "":
+        return
+
+    show_vibe_graph(selected_file)
 
 
 def ftn_report():
@@ -299,12 +385,36 @@ Recommendations:
     output.delete("0.0", "end")
     output.insert("0.0", report)
 
+def rcou_graph():
+
+    if selected_file == "":
+        return
+
+    show_rcou_graph(selected_file)
+
+def rcou_graph():
+
+    if selected_file == "":
+        return
+
+    show_rcou_graph(selected_file)
+
+
+def motor_stats():
+
+    if selected_file == "":
+        return
+
+    show_motor_stats_graph(selected_file)
+
 def rcou_report():
 
     if selected_file == "":
         return
 
     rcou = get_rcou_info(selected_file)
+
+    print(rcou)
 
     report = f"""
 ==========================
@@ -313,21 +423,182 @@ RCOU INFORMATION
 
 Total Samples : {rcou['samples']}
 
+Frame Type : {rcou['frame_type']}
+
+Motor Count : {rcou['motor_count']}
+
 PWM Min : {rcou['min']}
 
 PWM Max : {rcou['max']}
 
 PWM Mean : {rcou['mean']}
 
-Status : HEALTHY
+PWM Span : {rcou['span']}
+
+==========================
+INDIVIDUAL MOTOR ANALYSIS
+==========================
+
+Motor 1 Max : {rcou['m1_max']}
+
+Motor 2 Max : {rcou['m2_max']}
+
+Motor 3 Max : {rcou['m3_max']}
+
+Motor 4 Max : {rcou['m4_max']}
+"""
+
+    if rcou["motor_count"] == 6:
+
+        report += f"""
+
+Motor 5 Max : {rcou['m5_max']}
+
+Motor 6 Max : {rcou['m6_max']}
+"""
+
+    report += f"""
+
+==========================
+MOTOR BALANCE ANALYSIS
+==========================
+
+Motor 1 Avg : {rcou['m1_avg']}
+
+Motor 2 Avg : {rcou['m2_avg']}
+
+Motor 3 Avg : {rcou['m3_avg']}
+
+Motor 4 Avg : {rcou['m4_avg']}
+"""
+
+    if rcou["motor_count"] == 6:
+
+        report += f"""
+
+Motor 5 Avg : {rcou['m5_avg']}
+
+Motor 6 Avg : {rcou['m6_avg']}
+"""
+
+    if rcou["motor_count"] == 4:
+
+        avgs = [
+            rcou["m1_avg"],
+            rcou["m2_avg"],
+            rcou["m3_avg"],
+            rcou["m4_avg"]
+        ]
+
+    else:
+
+        avgs = [
+            rcou["m1_avg"],
+            rcou["m2_avg"],
+            rcou["m3_avg"],
+            rcou["m4_avg"],
+            rcou["m5_avg"],
+            rcou["m6_avg"]
+        ]
+
+    diff = round(max(avgs) - min(avgs), 2)
+
+    report += f"""
+
+Balance Difference : {diff}
+"""
+
+    if diff > 80:
+
+        report += """
+
+Status : IMBALANCED
 
 Recommendations:
 
-✓ ESC output detected
+- Check CG balance
 
-✓ PWM range normal
+- Check propeller condition
 
-✓ Motor output healthy
+- Check motor alignment
+
+- Check frame twist
+"""
+
+    elif diff > 40:
+
+        report += """
+
+Status : MINOR IMBALANCE
+
+Recommendations:
+
+- Monitor future flights
+
+- Compare motor outputs
+
+- Check vibration report
+"""
+
+    else:
+
+        report += """
+
+Status : WELL BALANCED
+
+Recommendations:
+
+- Motor outputs healthy
+
+- No major imbalance detected
+
+- Frame balance looks good
+"""
+
+    report += """
+
+==========================
+FLIGHT ASSESSMENT
+==========================
+"""
+
+    if rcou["span"] > 400:
+
+        report += """
+
+Status : AGGRESSIVE FLIGHT
+
+- Large motor output variation
+
+- Possible hard maneuvering
+
+- Review VIBE report
+"""
+
+    elif rcou["span"] > 200:
+
+        report += """
+
+Status : NORMAL FLIGHT
+
+- ESC outputs healthy
+
+- Motor authority good
+
+- PWM range acceptable
+"""
+
+    else:
+
+        report += """
+
+Status : LOW ACTIVITY
+
+- Hover or light maneuvering
+
+- ESC outputs stable
+
+- Power system healthy
 """
 
     output.delete("0.0", "end")
@@ -390,6 +661,26 @@ ctk.CTkButton(
     left_panel,
     text="RCOU Info",
     command=rcou_report
+).pack(pady=6)
+
+ctk.CTkButton(
+    left_panel,
+    text="Motor Graph",
+    command=rcou_graph
+).pack(pady=6)
+
+motor_stats_btn = ctk.CTkButton(
+    left_panel,
+    text="Motor Stats",
+    command=motor_stats
+)
+
+motor_stats_btn.pack(pady=6)
+
+ctk.CTkButton(
+    left_panel,
+    text="Vibration Graph",
+    command=vibe_graph
 ).pack(pady=6)
 
 ctk.CTkButton(
