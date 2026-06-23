@@ -13,6 +13,7 @@ from modules.rcou import (
     show_motor_stats_graph
 )
 from modules.health import get_health_score
+from modules.assessment import get_assessment
 
 
 ctk.set_appearance_mode("dark")
@@ -82,19 +83,14 @@ def summary_report():
     ftn = get_ftn_stats(selected_file)
     pwm = get_pwm_stats(selected_file)
 
-    health = 100
-
-    if vibe["mean_z"] > 15:
-        health -= 30
-    elif vibe["mean_z"] > 10:
-        health -= 15
+    h = get_health_score(selected_file)
 
     report = f"""
 ==========================
 DRONE HEALTH REPORT
 ==========================
 
-Health Score : {health}/100
+Health Score : {h['overall']}/100
 
 Vibration Status : HEALTHY
 
@@ -124,6 +120,8 @@ def health_report():
     h = get_health_score(selected_file)
 
     report = f"""
+
+
 ==========================
 HEALTH SCORE DASHBOARD
 ==========================
@@ -150,6 +148,38 @@ Motor Difference: {h['balance_diff']}
 Notch Span      : {h['notch_span']} Hz
 """
 
+
+    output.delete("0.0", "end")
+    output.insert("0.0", report)
+
+def assessment_report():
+
+    if selected_file == "":
+        return
+
+    a = get_assessment(selected_file)
+
+    report = f"""
+==========================
+FLIGHT ASSESSMENT
+==========================
+
+Overall Score : {a['score']}/100
+
+Status : {a['status']}
+
+==========================
+ISSUES
+==========================
+"""
+
+    for issue in a["issues"]:
+        report += f"\n- {issue}"
+
+    report += "\n\n==========================\nRECOMMENDATIONS\n=========================="
+
+    for rec in a["recommendations"]:
+        report += f"\n- {rec}"
 
     output.delete("0.0", "end")
     output.insert("0.0", report)
@@ -664,6 +694,12 @@ ctk.CTkButton(
     left_panel,
     text="Health Score",
     command=health_report
+).pack(pady=6)
+
+ctk.CTkButton(
+    left_panel,
+    text="Flight Assessment",
+    command=assessment_report
 ).pack(pady=6)
 
 ctk.CTkButton(

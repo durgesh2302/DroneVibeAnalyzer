@@ -38,9 +38,21 @@ def get_pwm_stats(binfile):
     pwm=pwm[:n]
     nf=nf[:n]
 
+    if n == 0:
+
+        return {
+            "correlation": "Not Available"
+        }
+
     corr=pd.Series(pwm).corr(
         pd.Series(nf)
     )
+
+    if pd.isna(corr):
+
+        return {
+            "correlation": "Not Available"
+        }
 
     return {
         "correlation": round(float(corr),3)
