@@ -5,11 +5,11 @@ def get_ftn_stats(binfile):
 
     log = mavutil.mavlink_connection(binfile)
 
-    data=[]
+    data = []
 
     while True:
 
-        msg=log.recv_match(type='FTN',blocking=False)
+        msg = log.recv_match(type='FTN', blocking=False)
 
         if msg is None:
             break
@@ -20,15 +20,31 @@ def get_ftn_stats(binfile):
             msg.NF1
         ])
 
-    df=pd.DataFrame(
+    if len(data) == 0:
+
+        return {
+            "mean": 0,
+            "min": 0,
+            "max": 0
+        }
+
+    df = pd.DataFrame(
         data,
-        columns=["TimeUS","I","NF1"]
+        columns=["TimeUS", "I", "NF1"]
     )
 
-    primary=df[df["I"]==0]
+    primary = df[df["I"] == 0]
+
+    if len(primary) == 0:
+
+        return {
+            "mean": 0,
+            "min": 0,
+            "max": 0
+        }
 
     return {
-        "mean": round(primary["NF1"].mean(),2),
-        "min": round(primary["NF1"].min(),2),
-        "max": round(primary["NF1"].max(),2)
+        "mean": round(float(primary["NF1"].mean()), 2),
+        "min": round(float(primary["NF1"].min()), 2),
+        "max": round(float(primary["NF1"].max()), 2)
     }

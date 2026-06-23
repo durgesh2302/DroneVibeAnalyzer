@@ -12,6 +12,7 @@ from modules.rcou import (
     show_rcou_graph,
     show_motor_stats_graph
 )
+from modules.health import get_health_score
 
 
 ctk.set_appearance_mode("dark")
@@ -107,12 +108,50 @@ PWM Correlation : {pwm['correlation']}
 
 Recommendations
 
-✓ Vibration acceptable
-✓ Dynamic notch working
-✓ No major resonance detected
+- Vibration acceptable
+- Dynamic notch working
+- No major resonance detected
 """
 
     output.delete("0.0","end")
+    output.insert("0.0", report)
+
+def health_report():
+
+    if selected_file == "":
+        return
+
+    h = get_health_score(selected_file)
+
+    report = f"""
+==========================
+HEALTH SCORE DASHBOARD
+==========================
+
+Overall Score : {h['overall']}/100
+
+Status : {h['status']}
+
+Vibration Score : {h['vibe_score']}/100
+Motor Score     : {h['motor_score']}/100
+FFT Score       : {h['fft_score']}/100
+FTN Score       : {h['ftn_score']}/100
+"""
+
+    report += f"""
+==========================
+DETAILS
+==========================
+
+Max Vibration   : {h['max_vibration']}
+
+Motor Difference: {h['balance_diff']}
+
+Notch Span      : {h['notch_span']} Hz
+"""
+
+
+    output.delete("0.0", "end")
     output.insert("0.0", report)
 
 
@@ -619,6 +658,12 @@ ctk.CTkButton(
     left_panel,
     text="Summary",
     command=summary_report
+).pack(pady=6)
+
+ctk.CTkButton(
+    left_panel,
+    text="Health Score",
+    command=health_report
 ).pack(pady=6)
 
 ctk.CTkButton(
