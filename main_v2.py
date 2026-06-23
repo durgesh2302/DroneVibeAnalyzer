@@ -14,6 +14,7 @@ from modules.rcou import (
 )
 from modules.health import get_health_score
 from modules.assessment import get_assessment
+from modules.pdf_export import export_pdf
 
 
 ctk.set_appearance_mode("dark")
@@ -282,6 +283,19 @@ Recommendations:
 
     output.delete("0.0", "end")
     output.insert("0.0", report)
+
+def export_pdf_report():
+
+    if selected_file == "":
+        return
+
+    filename = export_pdf(selected_file)
+
+    output.delete("0.0", "end")
+    output.insert(
+        "0.0",
+        f"PDF Generated Successfully\n\n{filename}"
+    )
 
 def vibe_graph():
 
@@ -766,7 +780,8 @@ ctk.CTkButton(
 
 ctk.CTkButton(
     left_panel,
-    text="Export PDF"
+    text="Export PDF",
+    command=export_pdf_report
 ).pack(pady=6)
 
 
